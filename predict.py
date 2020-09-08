@@ -20,7 +20,7 @@
 this file predict single image using the model we previous trained.
 """
 from models.fine_tune_model import fine_tune_model
-from global_config import *
+from global_config import IMAGE_SIZE, MODEL_SAVE_FILE, DEVICE
 import torch
 import os
 import sys
@@ -29,40 +29,37 @@ from data_loader.data_loader import DataLoader
 
 def predict_single_image(inputs, classes_name):
     model = fine_tune_model()
-    if USE_GPU:
-        inputs = inputs.cuda()
+    inputs = inputs.to(DEVICE)
     if not os.path.exists(MODEL_SAVE_FILE):
-        print('can not find model save file.')
+        print("can not find model save file.")
         exit()
     else:
-        if USE_GPU:
-            model.load_state_dict(torch.load(MODEL_SAVE_FILE))
-        else:
-            model.load_state_dict(torch.load(MODEL_SAVE_FILE, map_location=lambda storage, loc: storage))
+        model.load_state_dict(torch.load(MODEL_SAVE_FILE))
         outputs = model(inputs)
-        _, prediction_tensor = torch.max(outputs.data, 1)
-        if USE_GPU:
-            prediction = prediction_tensor.cpu().numpy()[0][0]
-            print('predict: ', prediction)
-            print('this is {}'.format(classes_name[prediction]))
-        else:
-            prediction = prediction_tensor.numpy()[0][0]
-            print('predict: ', prediction)
-            print('this is {}'.format(classes_name[prediction]))
+
+        print(outputs.data)
+        prediction_tensor = torch.argmax(outputs)
+        _, predict = torch.min(outputs.data, 1)
+        print(predict)
+
+        prediction = prediction_tensor.numpy()
+        print(prediction)
+        print("predict: ", prediction)
+        print("this is {}".format(classes_name[prediction]))
 
 
 def predict():
     if len(sys.argv) > 1:
-        print('predict image from : {}'.format(sys.argv[1]))
-        data_loader = DataLoader(data_dir='datasets/hymenoptera_data', image_size=IMAGE_SIZE)
+        print("predict image from : {}".format(sys.argv[1]))
+        data_loader = DataLoader(
+            data_dir="datasets/hymenoptera_data", image_size=IMAGE_SIZE
+        )
         if os.path.exists(sys.argv[1]):
             inputs = data_loader.make_predict_inputs(sys.argv[1])
             predict_single_image(inputs, data_loader.data_classes)
     else:
-        print('must specific image file path.')
+        print("must specific image file path.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     predict()
-
-
-
