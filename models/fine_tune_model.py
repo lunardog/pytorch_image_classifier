@@ -17,16 +17,26 @@
 # limitations under the License.
 # ------------------------------------------------------------------------
 from torchvision import models
+import torch
 from torch import nn
-from global_config import *
+import os
+from global_config import MODEL_SAVE_FILE, USE_GPU, DEVICE
 
 
 def fine_tune_model():
-    model_ft = models.resnet18(pretrained=True)
-    num_features = model_ft.fc.in_features
-    # fine tune we change original fc layer into classes num of our own
-    model_ft.fc = nn.Linear(num_features, 2)
 
-    if USE_GPU:
-        model_ft = model_ft.cuda()
-    return model_ft
+    model = models.mobilenet_v2(pretrained=True)
+    num_features = model.classifier[1].in_features
+    model.classifier[1] = nn.Linear(num_features, 2)
+
+    if os.path.exists(MODEL_SAVE_FILE):
+        print("loading saved model")
+        if USE_GPU:
+            model.load_state_dict(torch.load(MODEL_SAVE_FILE))
+        else:
+            model.load_state_dict(
+                torch.load(MODEL_SAVE_FILE, map_location=lambda storage, loc: storage)
+            )
+
+    model = model.to(DEVICE)
+    return model
