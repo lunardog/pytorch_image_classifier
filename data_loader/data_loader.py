@@ -45,33 +45,47 @@ class DataLoader(object):
         self.normalize_mean = [0.485, 0.456, 0.406]
         self.normalize_std = [0.229, 0.224, 0.225]
         self.data_transforms = {
-            'train': transforms.Compose([
-                transforms.RandomSizedCrop(self.image_size),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize(self.normalize_mean, self.normalize_std)
-            ]),
-            'val': transforms.Compose([
-                transforms.Scale(256),
-                transforms.CenterCrop(self.image_size),
-                transforms.ToTensor(),
-                transforms.Normalize(self.normalize_mean, self.normalize_std)
-            ]),
+            "train": transforms.Compose(
+                [
+                    transforms.RandomResizedCrop(self.image_size),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor(),
+                    transforms.Normalize(self.normalize_mean, self.normalize_std),
+                ]
+            ),
+            "val": transforms.Compose(
+                [
+                    transforms.Resize(256),
+                    transforms.CenterCrop(self.image_size),
+                    transforms.ToTensor(),
+                    transforms.Normalize(self.normalize_mean, self.normalize_std),
+                ]
+            ),
         }
 
         self._init_data_sets()
 
     def _init_data_sets(self):
-        self.data_sets = {x: datasets.ImageFolder(os.path.join(self.data_dir, x), self.data_transforms[x])
-                          for x in ['train', 'val']}
+        self.data_sets = {
+            x: datasets.ImageFolder(
+                os.path.join(self.data_dir, x), self.data_transforms[x]
+            )
+            for x in ["train", "val"]
+        }
 
-        self.data_loaders = {x: torch.utils.data.DataLoader(self.data_sets[x], batch_size=self.batch_size,
-                                                            shuffle=True, num_workers=4)
-                             for x in ['train', 'val']}
-        self.data_sizes = {x: len(self.data_sets[x]) for x in ['train', 'val']}
-        self.data_classes = self.data_sets['train'].classes
+        self.data_loaders = {
+            x: torch.utils.data.DataLoader(
+                self.data_sets[x],
+                batch_size=self.batch_size,
+                shuffle=True,
+                num_workers=4,
+            )
+            for x in ["train", "val"]
+        }
+        self.data_sizes = {x: len(self.data_sets[x]) for x in ["train", "val"]}
+        self.data_classes = self.data_sets["train"].classes
 
-    def load_data(self, data_set='train'):
+    def load_data(self, data_set="train"):
         return self.data_loaders[data_set]
 
     def show_image(self, tensor, title=None):
@@ -91,9 +105,6 @@ class DataLoader(object):
         :return:
         """
         image = Image.open(image_file)
-        image_tensor = self.data_transforms['val'](image).float()
+        image_tensor = self.data_transforms["val"](image).float()
         image_tensor.unsqueeze_(0)
         return Variable(image_tensor)
-
-
-
